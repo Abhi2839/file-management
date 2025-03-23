@@ -1,107 +1,63 @@
 #include <iostream>
 #include <fstream>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
 #include <cstring>
+#include <openssl/aes.h>
+#include <openssl/rand.h>
 
-const unsigned char AES_KEY[32] = "1234567890abcdef1234567890abcdef";
-
-void handleErrors() {
-    std::cerr << "Error occurred during OpenSSL operation." << std::endl;
-    exit(EXIT_FAILURE);
-}
+const unsigned char AES_KEY_VAL[32] = "1234567890abcdef1234567890abcdef";
+const unsigned char AES_IV[AES_BLOCK_SIZE] = "abcdef1234567890";
 
 void encryptFile(const std::string &filename) {
-    unsigned char iv[16];
-    if (!RAND_bytes(iv, sizeof(iv))) {
-        handleErrors();
-    }
+    AES_KEY enc_key;
+    AES_set_encrypt_key(AES_KEY_VAL, 256, &enc_key);
 
     std::ifstream infile(filename, std::ios::binary);
     std::ofstream outfile(filename + ".enc", std::ios::binary);
 
-    if (!infile.is_open() || !outfile.is_open()) {
-        std::cerr << "File open error." << std::endl;
-        return;
+    unsigned char buffer[AES_BLOCK_SIZE];
+    unsigned char cipher[AES_BLOCK_SIZE];
+
+    while (infile.read(reinterpret_cast<char*>(buffer), AES_BLOCK_SIZE)) {
+        AES_encrypt(buffer, cipher, &enc_key);
+        outfile.write(reinterpret_cast<char*>(cipher), AES_BLOCK_SIZE);
     }
 
-    outfile.write(reinterpret_cast<const char *>(iv), sizeof(iv));
-
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    if (!ctx) handleErrors();
-
-    if (EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, AES_KEY, iv) != 1) {
-        handleErrors();
-    }
-
-    unsigned char buffer[1024];
-    unsigned char ciphertext[1024 + EVP_CIPHER_block_size(EVP_aes_256_cbc())];
-    int len;
-
-    while (infile.read(reinterpret_cast<char *>(buffer), sizeof(buffer)) || infile.gcount() > 0) {
-        if (EVP_EncryptUpdate(ctx, ciphertext, &len, buffer, infile.gcount()) != 1) {
-            handleErrors();
-        }
-        outfile.write(reinterpret_cast<char *>(ciphertext), len);
-    }
-
-    if (EVP_EncryptFinal_ex(ctx, ciphertext, &len) != 1) {
-        handleErrors();
-    }
-    outfile.write(reinterpret_cast<char *>(ciphertext), len);
-
-    EVP_CIPHER_CTX_free(ctx);
     infile.close();
     outfile.close();
-    std::cout << "Encryption complete: " << filename << ".enc" << std::endl;
 }
 
 void decryptFile(const std::string &filename) {
-    unsigned char iv[16];
+    AES_KEY dec_key;
+    AES_set_decrypt_key(AES_KEY_VAL, 256, &dec_key);
 
     std::ifstream infile(filename, std::ios::binary);
     std::ofstream outfile("decrypted_" + filename, std::ios::binary);
 
-    if (!infile.is_open() || !outfile.is_open()) {
-        std::cerr << "File open error." << std::endl;
-        return;
+    unsigned char buffer[AES_BLOCK_SIZE];
+    unsigned char plain[AES_BLOCK_SIZE];
+
+    while (infile.read(reinterpret_cast<char*>(buffer), AES_BLOCK_SIZE)) {
+        AES_decrypt(buffer, plain, &dec_key);
+        outfile.write(reinterpret_cast<char*>(plain), AES_BLOCK_SIZE);
     }
 
-    infile.read(reinterpret_cast<char *>(iv), sizeof(iv));
-
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    if (!ctx) handleErrors();
-
-    if (EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, AES_KEY, iv) != 1) {
-        handleErrors();
-    }
-
-    unsigned char buffer[1024];
-    unsigned char plaintext[1024 + EVP_CIPHER_block_size(EVP_aes_256_cbc())];
-    int len;
-
-    while (infile.read(reinterpret_cast<char *>(buffer), sizeof(buffer)) || infile.gcount() > 0) {
-        if (EVP_DecryptUpdate(ctx, plaintext, &len, buffer, infile.gcount()) != 1) {
-            handleErrors();
-        }
-        outfile.write(reinterpret_cast<char *>(plaintext), len);
-    }
-
-    if (EVP_DecryptFinal_ex(ctx, plaintext, &len) != 1) {
-        handleErrors();
-    }
-    outfile.write(reinterpret_cast<char *>(plaintext), len);
-
-    EVP_CIPHER_CTX_free(ctx);
     infile.close();
     outfile.close();
-    std::cout << "Decryption complete: decrypted_" << filename << std::endl;
 }
 
 int main() {
     std::string filename;
-    std::cout << "Enter the filename to encrypt: ";
+    std::cout << "Enter the file name to encrypt: ";
     std::cin >> filename;
-    encryptFile(filename);
 
-    std::cout << "Enter the filename to decrypt: ";
+    encryptFile(filename);
+    std::cout << "Encryption completed!\n";
+
+    std::cout << "Enter the encrypted file name to decrypt: ";
+    std::cin >> filename;
+
+    decryptFile(filename);
+    std::cout << "Decryption completed!\n";
+
+    return 0;
+}
