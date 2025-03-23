@@ -1,59 +1,46 @@
 #include <iostream>
 #include <fstream>
 #include <openssl/aes.h>
-#include "encryption.h"
+#include <openssl/rand.h>
+#include <cstring>
 
-using namespace std;
-
-const unsigned char AES_KEY[32] = "1234567890abcdef1234567890abcdef";
+const unsigned char ENCRYPTION_KEY[32] = "1234567890abcdef1234567890abcdef";
 const unsigned char AES_IV[AES_BLOCK_SIZE] = "abcdef1234567890";
 
-void encryptFile(const string &filename) {
-    ifstream inFile(filename, ios::binary);
-    ofstream outFile(filename + ".enc", ios::binary);
-
-    if (!inFile || !outFile) {
-        cout << "File error!\n";
-        return;
-    }
-
+void encryptFile(const std::string &filename) {
     AES_KEY enc_key;
-    AES_set_encrypt_key(AES_KEY, 256, &enc_key);
+    AES_set_encrypt_key(ENCRYPTION_KEY, 256, &enc_key);
+
+    std::ifstream infile(filename, std::ios::binary);
+    std::ofstream outfile(filename + ".enc", std::ios::binary);
 
     unsigned char buffer[16];
     unsigned char cipher[16];
-
-    while (inFile.read((char *)buffer, sizeof(buffer))) {
-        AES_cfb128_encrypt(buffer, cipher, sizeof(buffer), &enc_key, (unsigned char *)AES_IV, nullptr, AES_ENCRYPT);
-        outFile.write((char *)cipher, sizeof(cipher));
+    while (infile.read(reinterpret_cast<char *>(buffer), sizeof(buffer))) {
+        AES_encrypt(buffer, cipher, &enc_key);
+        outfile.write(reinterpret_cast<char *>(cipher), sizeof(cipher));
     }
 
-    inFile.close();
-    outFile.close();
-    cout << "File encrypted successfully!\n";
+    infile.close();
+    outfile.close();
+    std::cout << "Encryption complete: " << filename << ".enc" << std::endl;
 }
 
-void decryptFile(const string &filename) {
-    ifstream inFile(filename, ios::binary);
-    ofstream outFile(filename.substr(0, filename.size() - 4), ios::binary);
-
-    if (!inFile || !outFile) {
-        cout << "File error!\n";
-        return;
-    }
-
+void decryptFile(const std::string &filename) {
     AES_KEY dec_key;
-    AES_set_decrypt_key(AES_KEY, 256, &dec_key);
+    AES_set_decrypt_key(ENCRYPTION_KEY, 256, &dec_key);
+
+    std::ifstream infile(filename, std::ios::binary);
+    std::ofstream outfile("decrypted_" + filename, std::ios::binary);
 
     unsigned char buffer[16];
     unsigned char plain[16];
-
-    while (inFile.read((char *)buffer, sizeof(buffer))) {
-        AES_cfb128_encrypt(buffer, plain, sizeof(buffer), &dec_key, (unsigned char *)AES_IV, nullptr, AES_DECRYPT);
-        outFile.write((char *)plain, sizeof(plain));
+    while (infile.read(reinterpret_cast<char *>(buffer), sizeof(buffer))) {
+        AES_decrypt(buffer, plain, &dec_key);
+        outfile.write(reinterpret_cast<char *>(plain), sizeof(plain));
     }
 
-    inFile.close();
-    outFile.close();
-    cout << "File decrypted successfully!\n";
+    infile.close();
+    outfile.close();
+    std::cout << "Decryption complete: decrypted_" << filename << std::endl;
 }
