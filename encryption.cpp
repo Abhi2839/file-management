@@ -15,12 +15,12 @@ void encryptFile(const std::string &filename) {
     std::ifstream infile(filename, std::ios::binary);
     std::ofstream outfile(filename + ".enc", std::ios::binary);
 
-    unsigned char buffer[16];
-    unsigned char cipher[16];
+    unsigned char buffer[AES_BLOCK_SIZE];
+    unsigned char cipher[AES_BLOCK_SIZE];
 
-    while (infile.read(reinterpret_cast<char *>(buffer), sizeof(buffer))) {
+    while (infile.read(reinterpret_cast<char *>(buffer), AES_BLOCK_SIZE)) {
         AES_encrypt(buffer, cipher, &enc_key);
-        outfile.write(reinterpret_cast<char *>(cipher), sizeof(cipher));
+        outfile.write(reinterpret_cast<char *>(cipher), AES_BLOCK_SIZE);
     }
 
     infile.close();
@@ -35,15 +35,28 @@ void decryptFile(const std::string &filename) {
     std::ifstream infile(filename, std::ios::binary);
     std::ofstream outfile("decrypted_" + filename, std::ios::binary);
 
-    unsigned char buffer[16];
-    unsigned char plain[16];
+    unsigned char buffer[AES_BLOCK_SIZE];
+    unsigned char plain[AES_BLOCK_SIZE];
 
-    while (infile.read(reinterpret_cast<char *>(buffer), sizeof(buffer))) {
+    while (infile.read(reinterpret_cast<char *>(buffer), AES_BLOCK_SIZE)) {
         AES_decrypt(buffer, plain, &dec_key);
-        outfile.write(reinterpret_cast<char *>(plain), sizeof(plain));
+        outfile.write(reinterpret_cast<char *>(plain), AES_BLOCK_SIZE);
     }
 
     infile.close();
     outfile.close();
     std::cout << "Decryption complete: decrypted_" << filename << std::endl;
+}
+
+int main() {
+    std::string filename;
+    std::cout << "Enter filename to encrypt: ";
+    std::cin >> filename;
+    encryptFile(filename);
+
+    std::cout << "Enter filename to decrypt: ";
+    std::cin >> filename + ".enc";
+    decryptFile(filename + ".enc");
+
+    return 0;
 }
