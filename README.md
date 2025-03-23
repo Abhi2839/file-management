@@ -1,13 +1,12 @@
-SecureFileManagement/
-│── src/
-│   ├── main.cpp                  # Driver code
-│   ├── authentication.h          # Authentication mechanisms (password, 2FA)
-│   ├── authentication.cpp
-│   ├── encryption.h              # AES encryption and decryption
-│   ├── encryption.cpp
-│   ├── file_operations.h         # Secure file operations (read, write, share, view metadata)
-│   └── file_operations.cpp
-│── Makefile                      # Compilation and clean-up script
-│── .gitignore                    # Specifies ignored files
-│── README.md                     # Project documentation
-│── LICENSE                       # License information
+# Secure File Management System
+
+This project demonstrates a secure file management system with authentication, AES encryption, and metadata viewing.
+
+## Features
+- User authentication
+- File encryption and decryption (AES)
+- Secure file operations
+
+## Compilation
+```bash
+make
