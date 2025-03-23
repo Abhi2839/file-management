@@ -1,0 +1,42 @@
+# Ignore compiled binary files
+secure_file_manager
+*.o
+
+# Ignore build files
+/build/
+/bin/
+/obj/
+
+# Ignore temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+*.swo
+
+# Ignore operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Ignore sensitive files
+*.key
+*.pem
+*.cert
+*.env
+credentials.txt
+
+# Ignore Makefile outputs
+*.dSYM
+*.out
+*.exe
+*.dll
+
+# Ignore C++ backup files
+*.gch
+*~
+
+# Ignore user-specific IDE/editor files
+.vscode/
+.idea/
+*.code-workspace
